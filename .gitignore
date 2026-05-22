@@ -1,0 +1,27 @@
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+.DS_Store
+*.swp
+
+# Heavy artefacts that should not be committed.
+*.pt
+*.pth
+*.pkl
+*.npz
+*.npy
+
+# Working directories produced by run_full_pipeline.sh
+work/
+graphs/
+graphs_*/
+embeddings*/
+models_*/
+output_*/
+**/checkpoints/
+
+# Build artefacts
+*.egg-info/
+build/
+dist/

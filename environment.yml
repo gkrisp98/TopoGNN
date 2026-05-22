@@ -1,0 +1,26 @@
+name: neuronurbs_fusion
+channels:
+  - conda-forge
+  - pytorch
+  - nvidia
+  - pyg
+dependencies:
+  - python=3.9
+  - pip
+  # Core CAD Library (Critical)
+  - pythonocc-core=7.7.2
+  # Deep Learning Stack
+  - pytorch
+  - torchvision
+  - torchaudio
+  - pytorch-cuda=11.8  # Change to 12.1 if you have a newer H100/A100 GPU
+  # Graph Neural Networks
+  - pyg                # Installs torch_geometric and dependencies
+  - pytorch-scatter
+  - pytorch-sparse
+  - pytorch-cluster
+  - pytorch-spline-conv
+  # Utilities
+  - numpy<2.0          # Pin numpy to avoid compatibility issues with older libs
+  - tqdm
+  - scipy
