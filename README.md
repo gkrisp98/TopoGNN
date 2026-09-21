@@ -94,6 +94,15 @@ The produced `models_topognn_full/results.json` should match
 `fusion360/results/models_gatv2_newseed/results.json` (test accuracy 0.9721,
 macro F1 0.9292, mIoU 0.8757).
 
+> **Two GNN configurations appear in the paper.** The headline Fusion 360 row
+> was trained with 4 layers, 8 heads and lr 5e-4 (what `run_full_pipeline.sh`
+> uses). The ablation suite in Tables 8-11 was trained with 6 layers, 4 heads
+> and lr 1e-3, so that every variant is compared against a common backbone;
+> `run_ablations.sh` uses those. This is why `models_rhc_baseline` (0.9722 /
+> 0.9259 / 0.8717) is close to but not identical to the headline row. The
+> `config` block inside each committed `results.json` records the exact
+> settings of that run.
+
 ### Ablations (Tables 8–11)
 
 Once the features and embeddings exist (steps 1–4 above), reproduce the

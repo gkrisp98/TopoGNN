@@ -1,0 +1,30 @@
+{
+  "model_type": "HeteroGATv2_Fusion360",
+  "test_accuracy": 0.9322183207811705,
+  "test_f1": 0.8370563638463088,
+  "test_iou": 0.7426574475685438,
+  "best_val_f1": 0.8457535589791765,
+  "config": {
+    "graphs_dir": "/home/konstantinos/Downloads/s2.0.0/breps/graphs_rhc_face_only",
+    "output_dir": "/home/konstantinos/Desktop/hetero_fusion/models_rhc_face_only",
+    "split_file": "/home/konstantinos/Desktop/hetero_fusion/train_test.json",
+    "hidden_dim": 128,
+    "num_layers": 6,
+    "num_heads": 4,
+    "num_classes": 8,
+    "epochs": 200,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "dropout": 0.1,
+    "attention_dropout": 0.1,
+    "focal_gamma": 2.0,
+    "label_smoothing": 0.1,
+    "patience": 30,
+    "batch_size": 128,
+    "grad_accum": 1,
+    "num_workers": 0,
+    "device": "cuda",
+    "seed": 42,
+    "no_normalize": false
+  }
+}

@@ -3,6 +3,7 @@ __pycache__/
 *.pyo
 .ipynb_checkpoints/
 .DS_Store
+.claude/
 *.swp
 
 # Heavy artefacts that should not be committed.
@@ -18,6 +19,7 @@ graphs/
 graphs_*/
 embeddings*/
 models_*/
+!**/results/models_*/
 output_*/
 **/checkpoints/
 

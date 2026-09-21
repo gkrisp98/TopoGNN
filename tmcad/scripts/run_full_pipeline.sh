@@ -24,11 +24,11 @@ SPLIT="$SCRIPT_DIR/mechcad_split.json"
 mkdir -p "$WORK"
 
 # (Optional) regenerate stratified split:
-# python $SCRIPT_DIR/generate_split.py --root "$STEP_DIR" --output "$SPLIT" --seed 42
+# python $SCRIPT_DIR/generate_split.py --data_dir "$STEP_DIR" --output "$SPLIT" --seed 42
 
 # 1. Feature extraction.
-python $SCRIPT_DIR/extract_nurbs.py        --step_dir "$STEP_DIR" --output_dir "$JOINT" --num_workers 8
-python $SCRIPT_DIR/extract_handcrafted.py  --step_dir "$STEP_DIR" --output_dir "$HC"    --num_workers 8
+python $SCRIPT_DIR/extract_nurbs.py        --data_dir "$STEP_DIR" --output_dir "$JOINT"
+python $SCRIPT_DIR/extract_handcrafted.py  --data_dir "$STEP_DIR" --output_dir "$HC"
 
 # 2. Self-supervised pretraining on TMCAD train split only.
 python $SCRIPT_DIR/train_face_vae.py   --joint_nurbs_dir "$JOINT" --output_dir "$FACE_OUT"   --split_file "$SPLIT" --epochs 100 --batch_size 64 --device cuda
@@ -52,13 +52,13 @@ python $SCRIPT_DIR/train_gatv2.py \
     --graphs_dir "$GRAPHS_VAE" --output_dir "$SCRIPT_DIR/models_gatv2_edge_vae" \
     --split_file "$SPLIT" \
     --hidden_dim 256 --num_heads 8 --num_layers 4 \
-    --batch_size 64 --epochs 200 --device cuda --seed 42
+    --batch_size 32 --lr 5e-4 --epochs 200 --device cuda --seed 42
 
 # 5. Handcrafted-only ablation -- Table 12 row 1.
 python $SCRIPT_DIR/train_gatv2.py \
     --graphs_dir "$GRAPHS_HC" --output_dir "$SCRIPT_DIR/models_gatv2_edge_handcrafted" \
     --split_file "$SPLIT" \
     --hidden_dim 256 --num_heads 8 --num_layers 4 \
-    --batch_size 64 --epochs 200 --device cuda --seed 42
+    --batch_size 32 --lr 5e-4 --epochs 200 --device cuda --seed 42
 
 echo "Done. Compare against tmcad/results/models_gatv2_edge_*/results.json"

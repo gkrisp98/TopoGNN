@@ -31,11 +31,11 @@ SPLIT="$SCRIPT_DIR/train_test.json"
 
 # 1. Geometry extraction (NURBS + UV grid + boundary curves).
 python $SCRIPT_DIR/extract_nurbs.py \
-    --step_dir "$STEP_DIR" --output_dir "$JOINT" --num_workers 8
+    --data_dir "$STEP_DIR" --output_dir "$JOINT" --seg_dir "$SEG_DIR"
 
 # 2. Handcrafted descriptors (Table 3).
 python $SCRIPT_DIR/extract_handcrafted.py \
-    --step_dir "$STEP_DIR" --output_dir "$HC" --num_workers 8
+    --data_dir "$STEP_DIR" --output_dir "$HC"
 
 # 3. Self-supervised entity-specific VAEs (Section 4.3).
 python $SCRIPT_DIR/train_face_vae.py   --joint_nurbs_dir "$JOINT" --output_dir "$FACE_OUT"   --split_file "$SPLIT" --epochs 100 --batch_size 64 --device cuda
@@ -66,8 +66,8 @@ python $SCRIPT_DIR/build_graphs.py \
 python $SCRIPT_DIR/train_gatv2.py \
     --graphs_dir "$GRAPHS" --output_dir "$SCRIPT_DIR/models_topognn_full" \
     --split_file "$SPLIT" \
-    --hidden_dim 128 --num_layers 6 --num_heads 4 \
-    --epochs 200 --lr 0.001 --batch_size 128 --patience 30 \
+    --hidden_dim 128 --num_layers 4 --num_heads 8 \
+    --epochs 200 --lr 5e-4 --batch_size 128 --patience 30 \
     --seed 42 --device cuda
 
 echo "Done. Results: $SCRIPT_DIR/models_topognn_full/results.json"

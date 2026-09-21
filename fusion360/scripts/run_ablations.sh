@@ -54,7 +54,8 @@ train () {  # train $name [$extra_flags]
 
 # Table 8 (Handcrafted features) + Tables 9-11 share the same baseline.
 build baseline    "--use_face --use_edge --use_vertex $COMMON_HC"
-train baseline
+# The baseline row was trained with 4 layers, unlike the other ablations (6).
+train baseline --num_layers 4
 
 build no_hc       "--use_face --use_edge --use_vertex --no_face_hc --no_edge_hc --no_vertex_hc"
 train no_hc
@@ -69,7 +70,7 @@ build no_edges    "--use_face --use_edge --use_vertex $COMMON_HC --remove_edge_n
 train no_edges
 build no_vertices "--use_face --use_edge --use_vertex $COMMON_HC --remove_vertex_nodes"
 train no_vertices
-build 4relations  "--use_face --use_edge --use_vertex $COMMON_HC --drop_loop_seq --drop_vertex_inc"
+build 4relations  "--use_face --use_edge --use_vertex $COMMON_HC --drop_relation_types next_in_loop,has,belongs_to"
 train 4relations
 
 # Table 10 (Geometric inputs)
