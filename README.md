@@ -171,12 +171,20 @@ obtained with `python tmcad/run_experiment.py --n_runs 5 ...`.
 ## Citation
 
 ```bibtex
-@article{topognn2026,
-  title   = {TopoGNN: Heterogeneous B-Rep Graph Learning with NURBS-Based Geometric Embeddings for Industrial Machining Feature Recognition},
-  author  = {...},
+@article{gkrispanis2026topognn,
+  title   = {TopoGNN: Heterogeneous B-Rep graph learning with NURBS-based
+             geometric embeddings for industrial machining feature recognition},
+  author  = {Gkrispanis, Konstantinos and Nousias, Stavros and
+             Knezevic-Sorger, Jovana and R{\"o}ver, Claas and Borrmann, Andr{\'e}},
   journal = {Computer-Aided Design},
-  year    = {2026}
+  volume  = {},
+  pages   = {104175},
+  year    = {2026},
+  issn    = {0010-4485},
+  doi     = {10.1016/j.cad.2026.104175},
+  url     = {https://doi.org/10.1016/j.cad.2026.104175}
 }
+
 ```
 
 ## License
