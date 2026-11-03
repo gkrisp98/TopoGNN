@@ -1,21 +1,39 @@
 # TopoGNN
 
-Reference implementation of **TopoGNN: Heterogeneous B-Rep Graph Learning with NURBS-Based Geometric Embeddings for Industrial Machining Feature Recognition** (Computer-Aided Design, 2026).
+Official implementation of **TopoGNN: Heterogeneous B-Rep graph learning with NURBS-based geometric embeddings for industrial machining feature recognition**, published in *Computer-Aided Design* (2026).
 
-TopoGNN operates directly on STEP boundary representations and models each CAD part as a heterogeneous face–edge–vertex graph. Type-specific self-supervised variational autoencoders learn NURBS- and UV-based geometric embeddings, and a relation-aware GATv2 classifier produces per-face (segmentation) or per-graph (classification) predictions.
+TopoGNN learns machining features and part classes directly from STEP CAD models. It represents each boundary representation (B-Rep) as a graph of faces, edges, and vertices, combining learned geometric embeddings with handcrafted descriptors. A heterogeneous GATv2 network predicts either a label for each face or a class for the whole part.
 
-This repository reproduces the public-benchmark results from the paper:
+**Paper:** [TopoGNN: Heterogeneous B-Rep graph learning with NURBS-based geometric embeddings for industrial machining feature recognition](https://doi.org/10.1016/j.cad.2026.104175) · *Computer-Aided Design*, 2026.
 
-| Benchmark | Task | Accuracy | macro F1 | mIoU |
+[Installation](#installation) · [Datasets](#datasets) · [Fusion 360](#reproducing-the-fusion-360-result-tables-4-6) · [TMCAD](#reproducing-the-tmcad-result-tables-7-12-13) · [Citation](#citation)
+
+![TopoGNN pipeline: STEP geometry and topology extraction, entity-specific VAE encoders, and heterogeneous GATv2 layers for face prediction.](docs/figures/pipeline.png)
+
+*The segmentation pipeline. Face, edge, and vertex VAEs encode geometry; their embeddings are combined with handcrafted features before graph learning. For part classification, a pooled graph readout replaces the face prediction head.*
+
+## Results
+
+The repository includes preprocessing, training scripts, and saved test metrics for the two public benchmarks used in the paper.
+
+| Benchmark | Task | Accuracy | Macro F1 | mIoU |
 |---|---|---|---|---|
 | Fusion 360 Gallery | Per-face MFR (8 classes) | **0.9721** | **0.9292** | **0.8757** |
 | TMCAD             | Part classification (10 classes) | **0.8850** | **0.8820** | – |
 
-The paper additionally reports results on a proprietary industrial dataset; that dataset cannot be redistributed and is therefore not part of this repository.
+The paper also evaluates a proprietary industrial dataset, which is not available for redistribution.
+
+## Graph representation
+
+Faces, edges, and vertices form three node types. Directed relations record face adjacency, oriented face–edge incidence, edge order around boundary loops, and edge–vertex incidence.
+
+![A plate with a through-hole, its selected faces, edges and vertices, and the corresponding heterogeneous graph with eight directed relation types.](docs/figures/brep-graph.png)
+
+*The cylindrical hole illustrates why orientation matters: its seam edge belongs to the same face in both traversal directions. The graph preserves both relations. Dashed arrows show inverse incidence relations.*
 
 ## Repository layout
 
-```
+```text
 TopoGNN/
 ├── environment.yml             # conda environment (PyTorch + PyG + pythonocc-core)
 ├── fusion360/                  # Fusion 360 Gallery (per-face MFR)
@@ -47,14 +65,15 @@ TopoGNN/
 │   ├── run_experiment.py       # Multi-seed runner (mean ± std)
 │   ├── scripts/run_full_pipeline.sh
 │   └── results/
-└── docs/                       # (placeholder for figures, etc.)
+└── docs/figures/               # Pipeline and B-Rep graph illustrations
 ```
 
 ## Installation
 
 The pipeline depends on `pythonocc-core` for STEP parsing, on `torch_geometric`
 for the heterogeneous GNN, and on `occwl` for UV grid sampling. The provided
-conda environment installs everything needed for both benchmarks:
+conda environment provides the CAD and learning dependencies. Install `occwl`
+separately after activating it:
 
 ```bash
 conda env create -f environment.yml
@@ -62,18 +81,16 @@ conda activate neuronurbs_fusion
 pip install occwl    # UV-grid sampling helper
 ```
 
-A CUDA-capable GPU is recommended; all numbers in the paper were obtained on
-a single NVIDIA GPU. CPU-only runs are possible but the VAE pretraining is
-slow.
+The supplied pipeline scripts use `--device cuda` and require a CUDA-capable
+GPU. To run on CPU, change the training commands to `--device cpu`; VAE
+pretraining will be slower. Run the commands below from the repository root.
 
 ## Datasets
 
 | Dataset | Source | Notes |
 |---|---|---|
 | Fusion 360 Gallery (segmentation) | <https://github.com/AutodeskAILab/Fusion360GalleryDataset> | The `breps/` release ships `step/` files and per-face `seg/` labels. We use the official train / validation / test split, mirrored in `fusion360/train_test.json`. |
-| TMCAD | The TMCAD release of Zou & Zhu, *CAD 2025* (BRT) | 10 part classes, 10,897 STEP files. We use a 70/15/15 stratified split (`tmcad/mechcad_split.json`). To regenerate from a different seed run `python tmcad/generate_split.py`. |
-
-The proprietary industrial dataset reported in Tables 4–5 of the paper is **not** included.
+| TMCAD | The TMCAD release of Zou & Zhu, *CAD 2025* (BRT) | 10 part classes, 10,897 STEP files. We use a 70/15/15 stratified split (`tmcad/mechcad_split.json`). See the [TMCAD instructions](tmcad/README.md) to generate a new split. |
 
 ## Reproducing the Fusion 360 result (Tables 4, 6)
 
@@ -86,30 +103,25 @@ bash fusion360/scripts/run_full_pipeline.sh \
     /path/to/work_dir
 ```
 
-The script performs, in order: NURBS / UV / boundary-curve extraction →
-handcrafted descriptor extraction → self-supervised pretraining of the three
-VAEs → embedding merge → heterogeneous-graph construction → GATv2 training.
+The script extracts geometry and handcrafted descriptors, pretrains the three
+VAEs, merges their embeddings, builds the graphs, and trains the GATv2 classifier.
 
-The produced `models_topognn_full/results.json` should match
-`fusion360/results/models_gatv2_newseed/results.json` (test accuracy 0.9721,
-macro F1 0.9292, mIoU 0.8757).
+Training writes metrics to `fusion360/models_topognn_full/results.json`.
+Compare them with the [saved paper results](fusion360/results/models_gatv2_newseed/results.json):
+accuracy 0.9721, macro F1 0.9292, and mIoU 0.8757. Exact values may vary between runs.
 
-> **Two GNN configurations appear in the paper.** The headline Fusion 360 row
-> was trained with 4 layers, 8 heads and lr 5e-4 (what `run_full_pipeline.sh`
-> uses). The ablation suite in Tables 8-11 was trained with 6 layers, 4 heads
-> and lr 1e-3, so that every variant is compared against a common backbone;
-> `run_ablations.sh` uses those. This is why `models_rhc_baseline` (0.9722 /
-> 0.9259 / 0.8717) is close to but not identical to the headline row. The
-> `config` block inside each committed `results.json` records the exact
-> settings of that run.
+The main Fusion 360 result uses 4 layers, 8 attention heads, and a learning
+rate of `5e-4`. The ablations use 6 layers, 4 heads, and `1e-3` throughout.
+Their full-model baseline (`models_rhc_baseline`) therefore differs slightly:
+0.9722 accuracy, 0.9259 macro F1, and 0.8717 mIoU. Each saved `results.json`
+includes the training settings in its `config` field.
 
 ### Ablations (Tables 8–11)
 
-Once the features and embeddings exist (steps 1–4 above), reproduce the
-ablation tables with:
+After the pipeline has generated the features and merged embeddings, run:
 
 ```bash
-bash fusion360/scripts/run_ablations.sh /path/to/work_dir $(pwd)/fusion360
+bash fusion360/scripts/run_ablations.sh /path/to/work_dir "$(pwd)/fusion360"
 ```
 
 The script emits one model directory per ablation (`models_rhc_*`); the
@@ -136,7 +148,7 @@ with the corresponding branch disabled, then re-running
 
 The reduced handcrafted descriptor set used in the paper (Table 3) is
 selected via the `--keep_*_hc_indices` flags, hard-coded at the top of
-`scripts/run_ablations.sh`.
+[`fusion360/scripts/run_ablations.sh`](fusion360/scripts/run_ablations.sh).
 
 ### Handcrafted descriptor sets
 
@@ -165,21 +177,28 @@ handcrafted-only ablation. Expected metrics:
 | Handcrafted only | `models_gatv2_edge_handcrafted` | 0.8739 | 0.8710 |
 | Full TopoGNN     | `models_gatv2_edge_vae`         | 0.8850 | 0.8820 |
 
-Multi-seed statistics (used for the discussion in Section 6.5) can be
-obtained with `python tmcad/run_experiment.py --n_runs 5 ...`.
+For multiple training seeds and embedding diagnostics, see the
+[TMCAD README](tmcad/README.md). The [Fusion 360 README](fusion360/README.md)
+describes the individual preprocessing stages.
 
 ## Citation
 
 ```bibtex
-@article{topognn2026,
-  title   = {TopoGNN: Heterogeneous B-Rep Graph Learning with NURBS-Based Geometric Embeddings for Industrial Machining Feature Recognition},
-  author  = {...},
+@article{gkrispanis2026topognn,
+  title   = {TopoGNN: Heterogeneous B-Rep graph learning with NURBS-based
+             geometric embeddings for industrial machining feature recognition},
+  author  = {Gkrispanis, Konstantinos and Nousias, Stavros and
+             Knezevic-Sorger, Jovana and R{\"o}ver, Claas and Borrmann, Andr{\'e}},
   journal = {Computer-Aided Design},
-  year    = {2026}
+  pages   = {104175},
+  year    = {2026},
+  issn    = {0010-4485},
+  doi     = {10.1016/j.cad.2026.104175},
+  url     = {https://doi.org/10.1016/j.cad.2026.104175}
 }
 ```
 
 ## License
 
-Released under the MIT License (`LICENSE`). The Fusion 360 Gallery and TMCAD
+Released under the [MIT License](LICENSE). The Fusion 360 Gallery and TMCAD
 datasets retain the licenses of their respective providers.
